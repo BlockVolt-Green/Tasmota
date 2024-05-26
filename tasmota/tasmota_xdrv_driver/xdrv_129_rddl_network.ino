@@ -41,7 +41,7 @@
 #include <string.h>
 #include <vector>
 #include <algorithm>
-
+#include <ArduinoJson.h>
 
 #ifdef ESP32
 #ifdef USE_SDCARD
@@ -153,6 +153,32 @@ void RDDLNotarize(){
     const char* data_str = TasmotaGlobal.mqtt_data.c_str() + start_position;
 
     runRDDLSDKNotarizationWorkflow(data_str, data_length);
+
+    HTTPClientLight http;
+    http.begin(SettingsText(SET_NEXUS_API));
+    http.addHeader("Content-Type", "application/json");
+    http.addHeader("Authorization", SettingsText(SET_NEXUS_AUTH_TOKEN));
+
+    // String js = "{\"data\":\"" + String(data_str) + "\",\"address\":\"" + String(sdkGetRDDLAddress()) + "\"}";
+
+
+    JsonDocument doc;
+    doc["data"] = data_str;
+    doc["address"] = sdkGetRDDLAddress();
+
+    String js;
+
+    serializeJson(doc,js);
+
+    Serial.println(js);
+    AddLog(2, data_str);  
+
+    int httpResponseCode = http.POST(js);
+
+    http.end();
+
+    runRDDLSDKNotarizationWorkflow(data_str, data_length);
+
     releaseNotarizationMutex();
   }
 }

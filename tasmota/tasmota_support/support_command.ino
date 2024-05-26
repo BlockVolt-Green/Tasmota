@@ -828,7 +828,7 @@ void CmndNexusAuthToken(void)
     SettingsUpdateText( SET_NEXUS_AUTH_TOKEN, (const char*)XdrvMailbox.data);
   }
 
-  Response_P( "{ \"D_CMND_NEXUS_AUTH_TOKEN\": \"%s\" }", SettingsText(SET_NEXUS_AUTH_TOKEN) );
+  Response_P( "{ \"D_CMND_NEXUS_AUTH_TOKEN\": \"%s\" }", SettingsText(SET_NEXUS_AUTH_TOKEN));
   CmndStatusResponse(22);
   ResponseClear();
 }
