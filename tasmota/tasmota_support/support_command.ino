@@ -47,7 +47,8 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   D_CMND_BALANCE "|" D_CMND_RESOLVEID "|" D_CMND_PLANETMINTDENOM "|" D_CMND_GETACCOUNTID "|"
   D_CMND_PLANETMINTCHAINID "|" D_CMND_MACHINEDATA "|"  D_CMND_POPCHALLENGE "|" D_CMND_ATTESTMACHINE "|" 
   D_CMND_NOTARIZATION_PERIODICITY "|" D_CMND_NOTARIZE "|" D_CMND_REMOVE_FILES "|" D_CMND_POPINIT "|"
-  D_CMND_CHALLENGE "|" D_CMND_POPCHALLENGERESULT "|" D_CMND_REDEEMCLAIMS "|" D_CMND_CREATEACCOUNT "|"
+  D_CMND_CHALLENGE "|" D_CMND_POPCHALLENGERESULT "|" D_CMND_REDEEMCLAIMS "|" D_CMND_CREATEACCOUNT "|" D_CMND_NEXUSAPI "|" D_CMND_NEXUS_AUTH_TOKEN "|"
+
 #ifdef USE_I2C
   D_CMND_I2CSCAN "|" D_CMND_I2CDRIVER "|"
 #endif
@@ -92,7 +93,11 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndBalance, &CmdResolveCid, &CmndPlanetmintDenom, &CmndGetAccountID, 
   &CmndPlanetmintChainID, &CmndMachineData, &CmndPoPChallenge, &CmndAttestMachine,
   &CmndNotarizationPeriodicity, &CmndNotarize, &CmndRemoveFiles, &CmndPoPInit,
+<<<<<<< HEAD
   &CmndChallenge, &CmndPoPChallengeResult, &CmndRedeemClaims, &CmndCreateAccount,
+=======
+  &CmndChallenge, &CmndPoPChallengeResult, &CmndRedeemClaims, &CmndNexusAPI, &CmndNexusAuthToken,
+>>>>>>> bd3ae064f (support commands for nexus config)
 #ifdef USE_I2C
   &CmndI2cScan, &CmndI2cDriver,
 #endif
@@ -795,6 +800,35 @@ void CmndPlanetmintAPI(void)
   }
 
   Response_P( "{ \"D_CMND_PLANETMINTAPI\": \"%s\" }", sdkGetSetting(SET_PLANETMINT_API) );
+  CmndStatusResponse(22);
+  ResponseClear();
+}
+
+
+void CmndNexusAPI(void)
+{
+  int32_t payload = XdrvMailbox.payload;
+
+  if( XdrvMailbox.data_len )
+  {
+    SettingsUpdateText( SET_NEXUS_API, (const char*)XdrvMailbox.data);
+  }
+
+  Response_P( "{ \"D_CMND_NEXUSAPI\": \"%s\" }", SettingsText(SET_NEXUS_API) );
+  CmndStatusResponse(22);
+  ResponseClear();
+}
+
+void CmndNexusAuthToken(void)
+{
+  int32_t payload = XdrvMailbox.payload;
+
+  if( XdrvMailbox.data_len )
+  {
+    SettingsUpdateText( SET_NEXUS_AUTH_TOKEN, (const char*)XdrvMailbox.data);
+  }
+
+  Response_P( "{ \"D_CMND_NEXUS_AUTH_TOKEN\": \"%s\" }", SettingsText(SET_NEXUS_AUTH_TOKEN) );
   CmndStatusResponse(22);
   ResponseClear();
 }
