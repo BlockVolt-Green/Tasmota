@@ -93,11 +93,8 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndBalance, &CmdResolveCid, &CmndPlanetmintDenom, &CmndGetAccountID, 
   &CmndPlanetmintChainID, &CmndMachineData, &CmndPoPChallenge, &CmndAttestMachine,
   &CmndNotarizationPeriodicity, &CmndNotarize, &CmndRemoveFiles, &CmndPoPInit,
-<<<<<<< HEAD
   &CmndChallenge, &CmndPoPChallengeResult, &CmndRedeemClaims, &CmndCreateAccount,
-=======
-  &CmndChallenge, &CmndPoPChallengeResult, &CmndRedeemClaims, &CmndNexusAPI, &CmndNexusAuthToken,
->>>>>>> bd3ae064f (support commands for nexus config)
+  &CmndNexusAPI, &CmndNexusAuthToken,
 #ifdef USE_I2C
   &CmndI2cScan, &CmndI2cDriver,
 #endif
