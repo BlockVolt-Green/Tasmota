@@ -28,10 +28,10 @@
 
 #include "esp_random.h"
 
-#define XDRV_129               129
+#define XDRV_129 129
 
-#define DRV_DEMO_MAX_DRV_TEXT  16
-#define RDDL_NETWORK_NOTARIZATION_TIMER_ONE_HOUR_IN_SECONDS (60*60)
+#define DRV_DEMO_MAX_DRV_TEXT 16
+#define RDDL_NETWORK_NOTARIZATION_TIMER_ONE_HOUR_IN_SECONDS (60 * 60)
 
 #include <stddef.h>
 #include <stdint.h>
@@ -46,49 +46,57 @@
 #ifdef ESP32
 #ifdef USE_SDCARD
 #include <SD.h>
-#endif  // USE_SDCARD
+#endif // USE_SDCARD
 #include "FFat.h"
 #include "FS.h"
-#endif  // ESP32
+#endif // ESP32
 
 #include "rddlSDKAPI.h"
-
+#include "rddlSDKUtils.h"
+#include "rddlSDKAbst.h"
 
 uint32_t counted_seconds = 0;
 
-
 // Demo command line commands
-const char kDrvDemoCommands[] PROGMEM = "Drv|"  // Prefix
-  "Text";
+const char kDrvDemoCommands[] PROGMEM = "Drv|" // Prefix
+                                        "Text";
 
-void (* const DrvDemoCommand[])(void) PROGMEM = {
-  &CmndDrvText };
+void (*const DrvDemoCommand[])(void) PROGMEM = {
+    &CmndDrvText};
 
 // Global structure containing driver saved variables
-struct {
-  uint32_t  crc32;    // To detect file changes
-  uint32_t  version;  // To detect driver function changes
-  char      drv_text[DRV_DEMO_MAX_DRV_TEXT -1][10];
+struct
+{
+  uint32_t crc32;   // To detect file changes
+  uint32_t version; // To detect driver function changes
+  char drv_text[DRV_DEMO_MAX_DRV_TEXT - 1][10];
 } DrvDemoSettings;
 
 // Global structure containing driver non-saved variables
-struct {
+struct
+{
   uint32_t any_value;
 } DrvDemoGlobal;
 
-
-void CmndDrvText(void) {
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= DRV_DEMO_MAX_DRV_TEXT)) {
-    if (!XdrvMailbox.usridx) {
+void CmndDrvText(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= DRV_DEMO_MAX_DRV_TEXT))
+  {
+    if (!XdrvMailbox.usridx)
+    {
       // Command DrvText
-      for (uint32_t i = 0; i < DRV_DEMO_MAX_DRV_TEXT; i++) {
+      for (uint32_t i = 0; i < DRV_DEMO_MAX_DRV_TEXT; i++)
+      {
         AddLog(LOG_LEVEL_DEBUG, PSTR("DRV: DrvText%02d %s"), i, DrvDemoSettings.drv_text[i]);
       }
       ResponseCmndDone();
-    } else {
+    }
+    else
+    {
       // Command DrvText<index> <text>
-      uint32_t index = XdrvMailbox.index -1;
-      if (XdrvMailbox.data_len > 0) {
+      uint32_t index = XdrvMailbox.index - 1;
+      if (XdrvMailbox.data_len > 0)
+      {
         snprintf_P(DrvDemoSettings.drv_text[index], sizeof(DrvDemoSettings.drv_text[index]), XdrvMailbox.data);
       }
       ResponseCmndIdxChar(DrvDemoSettings.drv_text[index]);
@@ -100,18 +108,20 @@ void CmndDrvText(void) {
  * Driver Settings load and save
 \*********************************************************************************************/
 
-void RDDLNetworkSettingsLoad(bool erase) {
+void RDDLNetworkSettingsLoad(bool erase)
+{
   // Called from FUNC_PRE_INIT (erase = 0) once at restart
   // Called from FUNC_RESET_SETTINGS (erase = 1) after command reset 4, 5, or 6
-    sdkSetSetting( SET_DEVICENAME, "RDDL-Tasmota");
+  sdkSetSetting(SET_DEVICENAME, "RDDL-Tasmota");
 }
 
-void RDDLNetworkSettingsSave(void) {
+void RDDLNetworkSettingsSave(void)
+{
   // Called from FUNC_SAhttp://tasmota/VE_SETTINGS every SaveData second and at restart
-
 }
 
-void getNotarizationMessage(){
+void getNotarizationMessage()
+{
   MqttShowSensor(false);
 }
 
@@ -119,12 +129,11 @@ void getNotarizationMessage(){
 #define ADDRESS_HASH_SIZE 20
 #define ADDRESS_TAIL 20
 
-
 bool g_mutex_running_notarization = false;
 
 bool claimNotarizationMutex()
 {
-  if ( !g_mutex_running_notarization )
+  if (!g_mutex_running_notarization)
   {
     g_mutex_running_notarization = true;
     return true;
@@ -133,7 +142,8 @@ bool claimNotarizationMutex()
     return false;
 }
 bool executePoP = false;
-void SetExecutePoP(){
+void SetExecutePoP()
+{
   executePoP = true;
 }
 
@@ -142,15 +152,17 @@ void releaseNotarizationMutex()
   g_mutex_running_notarization = false;
 }
 
-void RDDLNotarize(){
-  if( claimNotarizationMutex() )
+void RDDLNotarize()
+{
+  if (claimNotarizationMutex())
   {
+
     // create notarization message
     int start_position = ResponseLength();
     getNotarizationMessage();
-    int current_position  = ResponseLength();
+    int current_position = ResponseLength();
     size_t data_length = (size_t)(current_position - start_position);
-    const char* data_str = TasmotaGlobal.mqtt_data.c_str() + start_position;
+    const char *data_str = TasmotaGlobal.mqtt_data.c_str() + start_position;
 
     runRDDLSDKNotarizationWorkflow(data_str, data_length);
 
@@ -161,101 +173,108 @@ void RDDLNotarize(){
 
     // String js = "{\"data\":\"" + String(data_str) + "\",\"address\":\"" + String(sdkGetRDDLAddress()) + "\"}";
 
-
     JsonDocument doc;
     doc["data"] = data_str;
     doc["address"] = sdkGetRDDLAddress();
 
     String js;
 
-    serializeJson(doc,js);
+    serializeJson(doc, js);
 
     Serial.println(js);
-    AddLog(2, data_str);  
+    AddLog(2, data_str);
 
     int httpResponseCode = http.POST(js);
 
     http.end();
 
-    runRDDLSDKNotarizationWorkflow(data_str, data_length);
-
     releaseNotarizationMutex();
   }
 }
 
-void RemoveFiles(){
+void RemoveFiles()
+{
   deleteOldestFiles(500);
 }
 
-extern fs::FS* TfsGlobalFileSysHandle();
-extern fs::FS* TfsFlashFileSysHandle();
-extern fs::FS* TfsDownloadFileSysHandle();
+extern fs::FS *TfsGlobalFileSysHandle();
+extern fs::FS *TfsFlashFileSysHandle();
+extern fs::FS *TfsDownloadFileSysHandle();
 
 #define MAX_FILES 10000
 
-void deleteOldestFiles( int count ){
-  FS* filesystem = TfsGlobalFileSysHandle();
-  if( filesystem )
-    deleteOldestFilesFromFS( filesystem, count);
+void deleteOldestFiles(int count)
+{
+  FS *filesystem = TfsGlobalFileSysHandle();
+  if (filesystem)
+    deleteOldestFilesFromFS(filesystem, count);
 
   filesystem = TfsFlashFileSysHandle();
-  if( filesystem )
-    deleteOldestFilesFromFS( filesystem, count);
+  if (filesystem)
+    deleteOldestFilesFromFS(filesystem, count);
 
   filesystem = TfsDownloadFileSysHandle();
-  if( filesystem )
-    deleteOldestFilesFromFS( filesystem, count);
+  if (filesystem)
+    deleteOldestFilesFromFS(filesystem, count);
 }
 
-void deleteOldestFilesFromFS( FS* filesystem, int count ) {
-    if( !filesystem )
-      Serial.println("Failed to mount file system");
-    
-    File dir = filesystem->open("/");
-    std::vector<String> files;
-    String nextFile = dir.getNextFileName();
-    while (nextFile.length() > 0) {
-        //unsigned long timeStamp = extractTimestamp(fileName);
-        //files.push_back(std::make_pair(fileName, timeStamp));
-        if( nextFile.length() > 20 ){
-          files.push_back( nextFile );
-        }
-        nextFile = dir.getNextFileName();
+void deleteOldestFilesFromFS(FS *filesystem, int count)
+{
+  if (!filesystem)
+    Serial.println("Failed to mount file system");
+
+  File dir = filesystem->open("/");
+  std::vector<String> files;
+  String nextFile = dir.getNextFileName();
+  while (nextFile.length() > 0)
+  {
+    // unsigned long timeStamp = extractTimestamp(fileName);
+    // files.push_back(std::make_pair(fileName, timeStamp));
+    if (nextFile.length() > 20)
+    {
+      files.push_back(nextFile);
     }
+    nextFile = dir.getNextFileName();
+  }
 
-    // // Sort files based on timestamp
-    // std::sort(files.begin(), files.end(), [](const auto &a, const auto &b) {
-    //     return a.second < b.second;
-    // });
+  // // Sort files based on timestamp
+  // std::sort(files.begin(), files.end(), [](const auto &a, const auto &b) {
+  //     return a.second < b.second;
+  // });
 
-    // Delete the oldest 'count' files
-    for (int i = 0; i < count && i < files.size(); ++i) {
-        //AddLog(LOG_LEVEL_INFO, PSTR("Removing %s") ,files[i]);
+  // Delete the oldest 'count' files
+  for (int i = 0; i < count && i < files.size(); ++i)
+  {
+    // AddLog(LOG_LEVEL_INFO, PSTR("Removing %s") ,files[i]);
 #ifdef USE_UFILESYS
-         if( TfsDeleteFile( files[i].c_str()) ) {
-          //if (LittleFS.remove(files[i])) {
-          Serial.println("Deleted file: " + files[i]);
-         } else {
-
-          Serial.println("Failed to delete file: " + files[i]);
-         }
-#else
-        Serial.println("Failed to delete file: " + files[i]);
-#endif 
-
+    if (TfsDeleteFile(files[i].c_str()))
+    {
+      // if (LittleFS.remove(files[i])) {
+      Serial.println("Deleted file: " + files[i]);
     }
+    else
+    {
+
+      Serial.println("Failed to delete file: " + files[i]);
+    }
+#else
+    Serial.println("Failed to delete file: " + files[i]);
+#endif
+  }
 }
 
-void InitializePoPWorkflow(){
+void InitializePoPWorkflow()
+{
   bool IamChallenger = amIChallenger();
-  if( IamChallenger ){
+  if (IamChallenger)
+  {
     AddLog(2, "PoP: initialize PoP challenge");
 
     // select CID
-    char* cid = getCIDofChallengee();
-    AddLog(2, "PoP: CID to be challenged %s", cid );
-    bool result = ChallengeChallengee( cid, NULL);
-    if( result )
+    char *cid = getCIDofChallengee();
+    AddLog(2, "PoP: CID to be challenged %s", cid);
+    bool result = ChallengeChallengee(cid, NULL);
+    if (result)
       AddLog(2, "{ \"PoP\": challenge broadcasted }");
     else
       AddLog(2, "{ \"PoP\": challenge initialization failed }");
@@ -264,17 +283,18 @@ void InitializePoPWorkflow(){
     AddLog(2, "PoP: not the challenger");
 }
 
-void RDDLNetworkScheduler(){
+void RDDLNetworkScheduler()
+{
   ++counted_seconds;
-  if( counted_seconds >= (uint32_t)atoi(sdkGetSetting( SET_NOTARIZTATION_PERIODICITY)))
+  if (counted_seconds >= (uint32_t)atoi(sdkGetSetting(SET_NOTARIZTATION_PERIODICITY)))
   {
-    counted_seconds=0;
+    counted_seconds = 0;
     RDDLNotarize();
   }
-  else if( counted_seconds % 2 == 0 && executePoP ){
+  else if (counted_seconds % 2 == 0 && executePoP)
+  {
     executePoP = false;
     InitializePoPWorkflow();
-    
   }
 }
 
@@ -282,25 +302,27 @@ void RDDLNetworkScheduler(){
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv129(uint32_t function) {
+bool Xdrv129(uint32_t function)
+{
   bool result = false;
-  switch (function) {
-    case FUNC_RESET_SETTINGS:
-      RDDLNetworkSettingsLoad(1);
-      break;
-    case FUNC_SAVE_SETTINGS:
-      RDDLNetworkSettingsSave();
-      break;
-    case FUNC_COMMAND:
-      break;
-    case FUNC_PRE_INIT:
-      RDDLNetworkSettingsLoad(0);
-      break;
-    case FUNC_SAVE_BEFORE_RESTART:
-      // !!! DO NOT USE AS IT'S FUNCTION IS BETTER HANDLED BY FUNC_SAVE_SETTINGS !!!
-      break;
+  switch (function)
+  {
+  case FUNC_RESET_SETTINGS:
+    RDDLNetworkSettingsLoad(1);
+    break;
+  case FUNC_SAVE_SETTINGS:
+    RDDLNetworkSettingsSave();
+    break;
+  case FUNC_COMMAND:
+    break;
+  case FUNC_PRE_INIT:
+    RDDLNetworkSettingsLoad(0);
+    break;
+  case FUNC_SAVE_BEFORE_RESTART:
+    // !!! DO NOT USE AS IT'S FUNCTION IS BETTER HANDLED BY FUNC_SAVE_SETTINGS !!!
+    break;
   }
   return result;
 }
 
-#endif  // USE_DRV_FILE_DEMO
+#endif // USE_DRV_FILE_DEMO
