@@ -264,6 +264,7 @@
 #define D_CMND_PLANETMINTAPI "PlanetmintAPI"
 #define D_CMND_NEXUSAPI "NexusAPI"
 #define D_CMND_NEXUS_AUTH_TOKEN "NexusAuthToken"
+#define D_CMND_ELITE440 "Elite"
 #define D_CMND_CHALLENGERESPONSE "ChallengeResponse"
 #define D_CMND_RESOLVEID "ResolveCID"
 #define D_CMND_BALANCE "Balance"

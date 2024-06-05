@@ -216,6 +216,8 @@ uint32_t SETTINGS_LOCATION = EEPROM_LOCATION;
 
 #endif  // ESP32
 
+#include "include/meter_modbus.h"
+
 const uint8_t CFG_ROTATES = 7;      // Number of flash sectors used (handles uploads)
 
 uint32_t settings_location = EEPROM_LOCATION;
