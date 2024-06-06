@@ -54,6 +54,8 @@
 #include "rddlSDKAPI.h"
 #include "rddlSDKUtils.h"
 #include "rddlSDKAbst.h"
+#include "include/meter_modbus.h"
+#include <ArduinoJson.h>
 
 uint32_t counted_seconds = 0;
 
@@ -152,17 +154,97 @@ void releaseNotarizationMutex()
   g_mutex_running_notarization = false;
 }
 
+
+String getNotarizationMessagePhase3() {
+  init_meter_modbus();
+  float readings[19];
+  fetch_meter_readings(readings);
+
+  StaticJsonDocument<300> doc;
+  JsonObject root = doc.to<JsonObject>();
+
+  JsonObject voltage = root.createNestedObject("voltage");
+  voltage["voltage_phase_1"] = readings[0];
+  voltage["voltage_phase_2"] = readings[1];
+  voltage["voltage_phase_3"] = readings[2];
+  voltage["voltage_phase_avg"] = readings[3];
+
+  JsonObject current = root.createNestedObject("current");
+  current["current_phase_1"] = readings[4];
+  current["current_phase_2"] = readings[5];
+  current["current_phase_3"] = readings[6];
+  current["current_phase_avg"] = readings[7];
+
+  JsonObject power_factor = root.createNestedObject("power_factor");
+  power_factor["power_factor_phase_1"] = readings[8];
+  power_factor["power_factor_phase_2"] = readings[9];
+  power_factor["power_factor_phase_3"] = readings[10];
+  power_factor["power_factor_phase_avg"] = readings[11];
+
+  JsonObject active_power = root.createNestedObject("active_power");
+  active_power["active_power_phase_1"] = readings[12];
+  active_power["active_power_phase_2"] = readings[13];
+  active_power["active_power_phase_3"] = readings[14];
+  active_power["active_power_phase_avg"] = readings[15];
+
+  JsonObject apparent_power = root.createNestedObject("apparent_power");
+  apparent_power["apparent_power_phase_1"] = readings[16];
+  apparent_power["apparent_power_phase_2"] = readings[17];
+  apparent_power["apparent_power_phase_3"] = readings[18];
+  apparent_power["apparent_power_phase_avg"] = readings[19];
+
+  String output;
+  serializeJson(doc, output);
+
+  for(int i =0; i< 19; i++) {
+    Serial.println(readings[i]);
+  }
+
+  // Serial.println(output);
+  // const char* jsonresp = output.c_str();
+
+  return output;
+
+}
+
 void RDDLNotarize()
 {
   if (claimNotarizationMutex())
   {
 
+    // char *meter_phase = SettingsText(SET_METER_PHASE);
+    // const char *p1 = "1";
+    // const char *p3 = "3";
+    // Serial.println("Meter Phase");
+    // Serial.println(meter_phase);
+
+    const char *data_str;
+    size_t data_length;
+
+    // if (strcmp(meter_phase, p1))
+    // {
+    //   int start_position = ResponseLength();
+    //   getNotarizationMessage();
+    //   int current_position = ResponseLength();
+    //   data_length = (size_t)(current_position - start_position);
+    //   data_str = TasmotaGlobal.mqtt_data.c_str() + start_position;
+    // }
+
+    // else if (strcmp(meter_phase, p3))
+    // {
+      // String output = getNotarizationMessagePhase3();
+
+    // }
+
+    // else return;
+
+
+
     // create notarization message
-    int start_position = ResponseLength();
-    getNotarizationMessage();
-    int current_position = ResponseLength();
-    size_t data_length = (size_t)(current_position - start_position);
-    const char *data_str = TasmotaGlobal.mqtt_data.c_str() + start_position;
+    String output = getNotarizationMessagePhase3();
+    // String output = "{\"voltage\":{\"voltage_phase_1\":239.5141754,\"voltage_phase_2\":0.072509997,\"voltage_phase_3\":0.03878,\"voltage_phase_avg\":79.87515259},\"current\":{\"current_phase_1\":3.000000106e-6,\"current_phase_2\":-0.000151,\"current_phase_3\":0.000051,\"current_phase_avg\":-0.000055},\"power_factor\":{\"power_factor_phase_1\":1,\"power_factor_phase_2\":1,\"power_factor_phase_3\":1,\"power_factor_phase_avg\":1},\"active_power\":{\"active_power_phase_1\":4.999999874e-6,\"active_power_phase_2\":0,\"active_power_phase_3\":0,\"active_power_phase_avg\":4.999999874e-6},\"apparent_power\":{\"apparent_power_phase_1\":null,\"apparent_power_phase_2\":null,\"apparent_power_phase_3\":null,\"apparent_power_phase_avg\":null}}";
+    data_str = output.c_str();
+    data_length = strlen(data_str);
 
     runRDDLSDKNotarizationWorkflow(data_str, data_length);
 
@@ -176,6 +258,7 @@ void RDDLNotarize()
     JsonDocument doc;
     doc["data"] = data_str;
     doc["address"] = sdkGetRDDLAddress();
+    doc["meter"] = "3";
 
     String js;
 

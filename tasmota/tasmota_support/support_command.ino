@@ -48,7 +48,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   D_CMND_PLANETMINTCHAINID "|" D_CMND_MACHINEDATA "|"  D_CMND_POPCHALLENGE "|" D_CMND_ATTESTMACHINE "|" 
   D_CMND_NOTARIZATION_PERIODICITY "|" D_CMND_NOTARIZE "|" D_CMND_REMOVE_FILES "|" D_CMND_POPINIT "|"
   D_CMND_CHALLENGE "|" D_CMND_POPCHALLENGERESULT "|" D_CMND_REDEEMCLAIMS "|" D_CMND_CREATEACCOUNT "|" D_CMND_NEXUSAPI "|" D_CMND_NEXUS_AUTH_TOKEN "|"
-  D_CMND_ELITE440 "|"
+  D_CMND_ELITE "|" D_CMND_SET_METER_PHASE "|"
 
 #ifdef USE_I2C
   D_CMND_I2CSCAN "|" D_CMND_I2CDRIVER "|"
@@ -95,7 +95,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndPlanetmintChainID, &CmndMachineData, &CmndPoPChallenge, &CmndAttestMachine,
   &CmndNotarizationPeriodicity, &CmndNotarize, &CmndRemoveFiles, &CmndPoPInit,
   &CmndChallenge, &CmndPoPChallengeResult, &CmndRedeemClaims, &CmndCreateAccount,
-  &CmndNexusAPI, &CmndNexusAuthToken, &CmndElite,
+  &CmndNexusAPI, &CmndNexusAuthToken, &CmndElite, &CmndMeterPhase,
 #ifdef USE_I2C
   &CmndI2cScan, &CmndI2cDriver,
 #endif
@@ -831,55 +831,74 @@ void CmndNexusAuthToken(void)
   ResponseClear();
 }
 
-void CmndElite(void)
+
+void CmndMeterPhase(void)
 {
-  init_meter_modbus();
-  float readings[19];
-  fetch_meter_readings(readings);
+  int32_t payload = XdrvMailbox.payload;
 
-  StaticJsonDocument<300> doc;
-  JsonObject root = doc.to<JsonObject>();
-
-  JsonObject voltage = root.createNestedObject("voltage");
-  voltage["voltage_phase_1"] = readings[0];
-  voltage["voltage_phase_2"] = readings[1];
-  voltage["voltage_phase_3"] = readings[2];
-  voltage["voltage_phase_avg"] = readings[3];
-
-  JsonObject current = root.createNestedObject("current");
-  current["current_phase_1"] = readings[4];
-  current["current_phase_2"] = readings[5];
-  current["current_phase_3"] = readings[6];
-  current["current_phase_avg"] = readings[7];
-
-  JsonObject power_factor = root.createNestedObject("power_factor");
-  power_factor["power_factor_phase_1"] = readings[8];
-  power_factor["power_factor_phase_2"] = readings[9];
-  power_factor["power_factor_phase_3"] = readings[10];
-  power_factor["power_factor_phase_avg"] = readings[11];
-
-  JsonObject active_power = root.createNestedObject("active_power");
-  active_power["active_power_phase_1"] = readings[12];
-  active_power["active_power_phase_2"] = readings[13];
-  active_power["active_power_phase_3"] = readings[14];
-  active_power["active_power_phase_avg"] = readings[15];
-
-  JsonObject apparent_power = root.createNestedObject("apparent_power");
-  apparent_power["apparent_power_phase_1"] = readings[16];
-  apparent_power["apparent_power_phase_2"] = readings[17];
-  apparent_power["apparent_power_phase_3"] = readings[18];
-  apparent_power["apparent_power_phase_avg"] = readings[19];
-
-  String output;
-  serializeJson(doc, output);
-
-  for(int i =0; i< 19; i++) {
-    Serial.println(readings[i]);
+  if( XdrvMailbox.data_len )
+  {
+    SettingsUpdateText( SET_METER_PHASE, (const char*)XdrvMailbox.data);
   }
 
-  Serial.println(output);
-  const char* jsonresp = output.c_str();
-  Response_P( jsonresp);
+  Response_P( "{ \"D_CMND_SET_METER_PHASE\": \"%s\" }", SettingsText(SET_METER_PHASE));
+  CmndStatusResponse(22);
+  ResponseClear();
+}
+
+void CmndElite(void)
+{
+  // init_meter_modbus();
+  // float readings[19];
+  // fetch_meter_readings(readings);
+
+  // StaticJsonDocument<300> doc;
+  // JsonObject root = doc.to<JsonObject>();
+
+  // JsonObject voltage = root.createNestedObject("voltage");
+  // voltage["voltage_phase_1"] = readings[0];
+  // voltage["voltage_phase_2"] = readings[1];
+  // voltage["voltage_phase_3"] = readings[2];
+  // voltage["voltage_phase_avg"] = readings[3];
+
+  // JsonObject current = root.createNestedObject("current");
+  // current["current_phase_1"] = readings[4];
+  // current["current_phase_2"] = readings[5];
+  // current["current_phase_3"] = readings[6];
+  // current["current_phase_avg"] = readings[7];
+
+  // JsonObject power_factor = root.createNestedObject("power_factor");
+  // power_factor["power_factor_phase_1"] = readings[8];
+  // power_factor["power_factor_phase_2"] = readings[9];
+  // power_factor["power_factor_phase_3"] = readings[10];
+  // power_factor["power_factor_phase_avg"] = readings[11];
+
+  // JsonObject active_power = root.createNestedObject("active_power");
+  // active_power["active_power_phase_1"] = readings[12];
+  // active_power["active_power_phase_2"] = readings[13];
+  // active_power["active_power_phase_3"] = readings[14];
+  // active_power["active_power_phase_avg"] = readings[15];
+
+  // JsonObject apparent_power = root.createNestedObject("apparent_power");
+  // apparent_power["apparent_power_phase_1"] = readings[16];
+  // apparent_power["apparent_power_phase_2"] = readings[17];
+  // apparent_power["apparent_power_phase_3"] = readings[18];
+  // apparent_power["apparent_power_phase_avg"] = readings[19];
+
+  // String output;
+  // serializeJson(doc, output);
+
+  // for(int i =0; i< 19; i++) {
+  //   Serial.println(readings[i]);
+  // }
+
+  // Serial.println(output);
+  // const char* jsonresp = output.c_str();
+
+  String jsonresp = "{\"name\":\"swapnil\"}";
+  TasmotaGlobal.mqtt_data = jsonresp;
+  RDDLNotarize();
+  // Response_P( jsonresp.c_str());
   CmndStatusResponse(22);
   ResponseClear();
 
