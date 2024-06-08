@@ -48,7 +48,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   D_CMND_PLANETMINTCHAINID "|" D_CMND_MACHINEDATA "|"  D_CMND_POPCHALLENGE "|" D_CMND_ATTESTMACHINE "|" 
   D_CMND_NOTARIZATION_PERIODICITY "|" D_CMND_NOTARIZE "|" D_CMND_REMOVE_FILES "|" D_CMND_POPINIT "|"
   D_CMND_CHALLENGE "|" D_CMND_POPCHALLENGERESULT "|" D_CMND_REDEEMCLAIMS "|" D_CMND_CREATEACCOUNT "|" D_CMND_NEXUSAPI "|" D_CMND_NEXUS_AUTH_TOKEN "|"
-  D_CMND_ELITE "|" D_CMND_SET_METER_PHASE "|"
+  D_CMND_ELITE "|" D_CMND_SET_METER "|"
 
 #ifdef USE_I2C
   D_CMND_I2CSCAN "|" D_CMND_I2CDRIVER "|"
@@ -95,7 +95,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndPlanetmintChainID, &CmndMachineData, &CmndPoPChallenge, &CmndAttestMachine,
   &CmndNotarizationPeriodicity, &CmndNotarize, &CmndRemoveFiles, &CmndPoPInit,
   &CmndChallenge, &CmndPoPChallengeResult, &CmndRedeemClaims, &CmndCreateAccount,
-  &CmndNexusAPI, &CmndNexusAuthToken, &CmndElite, &CmndMeterPhase,
+  &CmndNexusAPI, &CmndNexusAuthToken, &CmndElite, &CmndMeter,
 #ifdef USE_I2C
   &CmndI2cScan, &CmndI2cDriver,
 #endif
@@ -832,16 +832,16 @@ void CmndNexusAuthToken(void)
 }
 
 
-void CmndMeterPhase(void)
+void CmndMeter(void)
 {
   int32_t payload = XdrvMailbox.payload;
 
   if( XdrvMailbox.data_len )
   {
-    SettingsUpdateText( SET_METER_PHASE, (const char*)XdrvMailbox.data);
+    SettingsUpdateText( SET_METER, (const char*)XdrvMailbox.data);
   }
 
-  Response_P( "{ \"D_CMND_SET_METER_PHASE\": \"%s\" }", SettingsText(SET_METER_PHASE));
+  Response_P( "{ \"D_CMND_SET_METER\": \"%s\" }", SettingsText(SET_METER));
   CmndStatusResponse(22);
   ResponseClear();
 }

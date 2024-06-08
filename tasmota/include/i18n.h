@@ -265,7 +265,7 @@
 #define D_CMND_NEXUSAPI "NexusAPI"
 #define D_CMND_NEXUS_AUTH_TOKEN "NexusAuthToken"
 #define D_CMND_ELITE "Elite"
-#define D_CMND_SET_METER_PHASE "MeterPhase"
+#define D_CMND_SET_METER "Meter"
 #define D_CMND_CHALLENGERESPONSE "ChallengeResponse"
 #define D_CMND_RESOLVEID "ResolveCID"
 #define D_CMND_BALANCE "Balance"

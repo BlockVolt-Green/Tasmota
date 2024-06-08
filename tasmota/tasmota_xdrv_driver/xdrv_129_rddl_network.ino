@@ -154,15 +154,18 @@ void releaseNotarizationMutex()
   g_mutex_running_notarization = false;
 }
 
+String getNotarizationMessagePhase3()
+{
 
-String getNotarizationMessagePhase3() {
   init_meter_modbus();
-  float readings[19];
+
+  float readings[19] = {0};
   fetch_meter_readings(readings);
 
-  StaticJsonDocument<300> doc;
+  StaticJsonDocument<700> doc;
   JsonObject root = doc.to<JsonObject>();
 
+  root["Time"] = GetDateAndTime(DT_UTC);
   JsonObject voltage = root.createNestedObject("voltage");
   voltage["voltage_phase_1"] = readings[0];
   voltage["voltage_phase_2"] = readings[1];
@@ -196,55 +199,63 @@ String getNotarizationMessagePhase3() {
   String output;
   serializeJson(doc, output);
 
-  for(int i =0; i< 19; i++) {
+  for (int i = 0; i < 19; i++)
+  {
     Serial.println(readings[i]);
   }
 
-  // Serial.println(output);
-  // const char* jsonresp = output.c_str();
-
   return output;
-
 }
 
 void RDDLNotarize()
 {
+
   if (claimNotarizationMutex())
   {
+    
+    int not_perodicity = std::atoi(SettingsText(SET_NOTARIZTATION_PERIODICITY));
 
-    // char *meter_phase = SettingsText(SET_METER_PHASE);
-    // const char *p1 = "1";
-    // const char *p3 = "3";
-    // Serial.println("Meter Phase");
-    // Serial.println(meter_phase);
+    // prevent notarization stalling
+    if (not_perodicity < 60)
+    {
+      SettingsUpdateText(SET_NOTARIZTATION_PERIODICITY, "60");
+    }
 
-    const char *data_str;
-    size_t data_length;
-
-    // if (strcmp(meter_phase, p1))
-    // {
-    //   int start_position = ResponseLength();
-    //   getNotarizationMessage();
-    //   int current_position = ResponseLength();
-    //   data_length = (size_t)(current_position - start_position);
-    //   data_str = TasmotaGlobal.mqtt_data.c_str() + start_position;
-    // }
-
-    // else if (strcmp(meter_phase, p3))
-    // {
-      // String output = getNotarizationMessagePhase3();
-
-    // }
-
-    // else return;
-
-
+    char *meter = SettingsText(SET_METER);
+    Serial.println(meter);
+    if (strcmp(meter, "null") == 0 || strcmp(meter, "") == 0)
+      return;
+    Serial.println("Meter type passed");
 
     // create notarization message
-    String output = getNotarizationMessagePhase3();
-    // String output = "{\"voltage\":{\"voltage_phase_1\":239.5141754,\"voltage_phase_2\":0.072509997,\"voltage_phase_3\":0.03878,\"voltage_phase_avg\":79.87515259},\"current\":{\"current_phase_1\":3.000000106e-6,\"current_phase_2\":-0.000151,\"current_phase_3\":0.000051,\"current_phase_avg\":-0.000055},\"power_factor\":{\"power_factor_phase_1\":1,\"power_factor_phase_2\":1,\"power_factor_phase_3\":1,\"power_factor_phase_avg\":1},\"active_power\":{\"active_power_phase_1\":4.999999874e-6,\"active_power_phase_2\":0,\"active_power_phase_3\":0,\"active_power_phase_avg\":4.999999874e-6},\"apparent_power\":{\"apparent_power_phase_1\":null,\"apparent_power_phase_2\":null,\"apparent_power_phase_3\":null,\"apparent_power_phase_avg\":null}}";
-    data_str = output.c_str();
-    data_length = strlen(data_str);
+
+    const char *data_str = nullptr;
+    size_t data_length = 0;
+    String output = "";
+
+    if (strcmp(meter, "default") == 0)
+    {
+      int start_position = ResponseLength();
+      getNotarizationMessage();
+      int current_position = ResponseLength();
+      data_length = (size_t)(current_position - start_position);
+      data_str = TasmotaGlobal.mqtt_data.c_str() + start_position;
+    }
+
+    else if (strcmp(meter, "elite") == 0)
+    {
+      output = getNotarizationMessagePhase3();
+      data_str = output.c_str();
+      data_length = strlen(data_str);
+    }
+    Serial.println("Data Str: ");
+    Serial.println(data_str);
+    Serial.println("Data Str Len: ");
+    Serial.println(data_length);
+
+
+    if (data_str == nullptr || data_length == 0) return;
+    Serial.println("Data str null check pass");
 
     runRDDLSDKNotarizationWorkflow(data_str, data_length);
 
@@ -258,7 +269,7 @@ void RDDLNotarize()
     JsonDocument doc;
     doc["data"] = data_str;
     doc["address"] = sdkGetRDDLAddress();
-    doc["meter"] = "3";
+    doc["meter"] = meter;
 
     String js;
 

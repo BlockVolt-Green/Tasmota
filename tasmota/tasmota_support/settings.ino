@@ -1071,7 +1071,7 @@ void SettingsDefaultSet2(void) {
   SettingsUpdateText(SET_RGX_PASSWORD, PSTR(WIFI_RGX_PASSWORD));
   SettingsUpdateText(SET_NEXUS_API, PSTR(NEXUS_API));
   SettingsUpdateText(SET_NEXUS_AUTH_TOKEN, PSTR(NEXUS_AUTH_TOKEN));
-  SettingsUpdateText(SET_METER_PHASE, PSTR(METER_PHASE));
+  SettingsUpdateText(SET_METER, PSTR(METER));
 
 
   Settings->sbflag1.range_extender = WIFI_RGX_STATE;

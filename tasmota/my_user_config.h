@@ -81,7 +81,7 @@
                                                  // The configuration can be changed after first setup using WifiConfig 0, 2, 4, 5, 6 and 7.
 #define NEXUS_API             "null" 
 #define NEXUS_AUTH_TOKEN      "null"
-#define METER_PHASE      "null"
+#define METER      "null"
 
 
 #define DNS_TIMEOUT            1000              // [DnsTimeout] Number of ms before DNS timeout

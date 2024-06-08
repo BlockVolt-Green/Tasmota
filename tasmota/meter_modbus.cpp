@@ -21,7 +21,7 @@ void postTransmission()
 void init_meter_modbus()
 {
 
-  Serial.println("==Init started");
+  Serial.println("Modbus Init started");
   pinMode(MAX485_DE, OUTPUT);
 
   Serial2.begin(9600, SERIAL_8N1, MySerialRX, MySerialTX);
@@ -48,14 +48,14 @@ void init_meter_modbus()
 
   node_kva.preTransmission(preTransmission);
   node_kva.postTransmission(postTransmission);
-  Serial.println("==Init Completed");
+  Serial.println("Modbus Init Completed");
 
 }
 
 void fetch_meter_readings(float *readings)
 {
 
-  uint8_t result_v, result_i, result_pf, result_kw, result_kva;
+  uint8_t result_v, result_i, result_pf, result_kw, result_kva = 0;
 
   uint32_t num = 0;
   float f = 0;
@@ -101,8 +101,7 @@ void fetch_meter_readings(float *readings)
     readings[3] = vAvg;
 
   }
-  //***********************************************************I1____I2_____I3_AVG *******************************
-  
+  //***********************************************************I1____I2_____I3_AVG ******************************* 
 
   result_i = node_i.readHoldingRegisters(0x79, 8);
   if (result_i == node_i.ku8MBSuccess)
