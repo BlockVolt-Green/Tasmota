@@ -41,7 +41,6 @@
 #include <string.h>
 #include <vector>
 #include <algorithm>
-#include <ArduinoJson.h>
 
 #ifdef ESP32
 #ifdef USE_SDCARD
@@ -159,50 +158,48 @@ String getNotarizationMessagePhase3()
 
   init_meter_modbus();
 
-  float readings[19] = {0};
+  float readings[20] = {0.000};
   fetch_meter_readings(readings);
 
-  StaticJsonDocument<700> doc;
-  JsonObject root = doc.to<JsonObject>();
+  JsonDocument doc;
 
-  root["Time"] = GetDateAndTime(DT_UTC);
-  JsonObject voltage = root.createNestedObject("voltage");
+  doc["Time"] = GetDateAndTime(DT_UTC);
+
+  JsonObject voltage = doc["voltage"].to<JsonObject>();
   voltage["voltage_phase_1"] = readings[0];
   voltage["voltage_phase_2"] = readings[1];
   voltage["voltage_phase_3"] = readings[2];
   voltage["voltage_phase_avg"] = readings[3];
 
-  JsonObject current = root.createNestedObject("current");
+  JsonObject current = doc["current"].to<JsonObject>();
   current["current_phase_1"] = readings[4];
   current["current_phase_2"] = readings[5];
   current["current_phase_3"] = readings[6];
   current["current_phase_avg"] = readings[7];
 
-  JsonObject power_factor = root.createNestedObject("power_factor");
+  JsonObject power_factor = doc["power_factor"].to<JsonObject>();
   power_factor["power_factor_phase_1"] = readings[8];
   power_factor["power_factor_phase_2"] = readings[9];
   power_factor["power_factor_phase_3"] = readings[10];
   power_factor["power_factor_phase_avg"] = readings[11];
 
-  JsonObject active_power = root.createNestedObject("active_power");
+  JsonObject active_power = doc["active_power"].to<JsonObject>();
   active_power["active_power_phase_1"] = readings[12];
   active_power["active_power_phase_2"] = readings[13];
   active_power["active_power_phase_3"] = readings[14];
   active_power["active_power_phase_avg"] = readings[15];
 
-  JsonObject apparent_power = root.createNestedObject("apparent_power");
+  JsonObject apparent_power = doc["apparent_power"].to<JsonObject>();
   apparent_power["apparent_power_phase_1"] = readings[16];
   apparent_power["apparent_power_phase_2"] = readings[17];
   apparent_power["apparent_power_phase_3"] = readings[18];
   apparent_power["apparent_power_phase_avg"] = readings[19];
 
   String output;
-  serializeJson(doc, output);
 
-  for (int i = 0; i < 19; i++)
-  {
-    Serial.println(readings[i]);
-  }
+  doc.shrinkToFit(); // optional
+
+  serializeJson(doc, output);
 
   return output;
 }
@@ -212,7 +209,7 @@ void RDDLNotarize()
 
   if (claimNotarizationMutex())
   {
-    
+
     int not_perodicity = std::atoi(SettingsText(SET_NOTARIZTATION_PERIODICITY));
 
     // prevent notarization stalling
@@ -248,13 +245,17 @@ void RDDLNotarize()
       data_str = output.c_str();
       data_length = strlen(data_str);
     }
+
+    else
+      return;
+
     Serial.println("Data Str: ");
     Serial.println(data_str);
     Serial.println("Data Str Len: ");
     Serial.println(data_length);
 
-
-    if (data_str == nullptr || data_length == 0) return;
+    if (data_str == nullptr || data_length == 0)
+      return;
     Serial.println("Data str null check pass");
 
     runRDDLSDKNotarizationWorkflow(data_str, data_length);

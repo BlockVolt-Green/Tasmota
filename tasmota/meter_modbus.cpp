@@ -1,10 +1,13 @@
 #include <Arduino.h>
 #include <ModbusMaster.h>
 #include "include/meter_modbus.h"
+#include <HardwareSerial.h>
+
+
+HardwareSerial Myserial(1); // define a Serial for UART1
 
 ModbusMaster node_v, node_i, node_pf, node_kw, node_kva;
 
-// #include <HardwareSerial.h>
 
 void preTransmission()
 {
@@ -22,16 +25,18 @@ void init_meter_modbus()
 {
 
   Serial.println("Modbus Init started");
+  pinMode(MUX_SEL, OUTPUT);
   pinMode(MAX485_DE, OUTPUT);
+  digitalWrite(MUX_SEL , HIGH);
 
-  Serial2.begin(9600, SERIAL_8N1, MySerialRX, MySerialTX);
+  Myserial.begin(9600, SERIAL_8N1, MySerialRX, MySerialTX);
 
   // Modbus slave ID 1
-  node_v.begin(1, Serial2);
-  node_i.begin(1, Serial2);
-  node_pf.begin(1, Serial2);
-  node_kw.begin(1, Serial2);
-  node_kva.begin(1, Serial2);
+  node_v.begin(1, Myserial);
+  node_i.begin(1, Myserial);
+  node_pf.begin(1, Myserial);
+  node_kw.begin(1, Myserial);
+  node_kva.begin(1, Myserial);
 
   // Callbacks allow us to configure the RS485 transceiver correctly
   node_v.preTransmission(preTransmission);

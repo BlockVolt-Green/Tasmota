@@ -22,8 +22,6 @@
 #include "planetmintgo.h"
 #include "rddlSDKAPI.h"
 #include "rddlSDKUtils.h"
-#include "include/meter_modbus.h"
-#include <ArduinoJson.h>
 
 const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   // SetOptions synonyms
